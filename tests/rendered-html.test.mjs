@@ -18,17 +18,17 @@ test("renderiza a abertura e a navegacao principal", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Brasil declarado/);
-  assert.match(html, /Um país visto/);
-  assert.match(html, /Renda &amp; patrimônio/);
+  assert.match(html, /Duas fotos/);
+  assert.match(html, /Estruturas sociais/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
 
 test("renderiza todas as paginas editoriais", async () => {
   for (const [path, text] of [
-    ["/desigualdade", "Poucos no topo"],
-    ["/raca", "Metade do retrato"],
-    ["/territorio", "O CEP também"],
-    ["/trabalho", "O lugar no trabalho"],
+    ["/desigualdade", "O topo cresce"],
+    ["/raca", "Entre os anos"],
+    ["/territorio", "Não basta somar"],
+    ["/trabalho", "A profissão explica"],
     ["/metodo", "O que a declaração"],
   ]) {
     const response = await render(path);

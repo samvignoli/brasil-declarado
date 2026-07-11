@@ -1,0 +1,67 @@
+year,level,code,name,population
+2024,country,1,Brasil,212583750
+2025,country,1,Brasil,213421037
+2024,region,1,Norte,18669345
+2025,region,1,Norte,18801282
+2024,region,2,Nordeste,57112096
+2025,region,2,Nordeste,57244485
+2024,region,3,Sudeste,88617693
+2025,region,3,Sudeste,88825643
+2024,region,4,Sul,31113021
+2025,region,4,Sul,31310809
+2024,region,5,Centro-Oeste,17071595
+2025,region,5,Centro-Oeste,17238818
+2024,state,11,Rondônia,1746227
+2025,state,11,Rondônia,1751950
+2024,state,12,Acre,880631
+2025,state,12,Acre,884372
+2024,state,13,Amazonas,4281209
+2025,state,13,Amazonas,4321616
+2024,state,14,Roraima,716793
+2025,state,14,Roraima,738772
+2024,state,15,Pará,8664306
+2025,state,15,Pará,8711196
+2024,state,16,Amapá,802837
+2025,state,16,Amapá,806517
+2024,state,17,Tocantins,1577342
+2025,state,17,Tocantins,1586859
+2024,state,21,Maranhão,7010960
+2025,state,21,Maranhão,7018211
+2024,state,22,Piauí,3375646
+2025,state,22,Piauí,3384547
+2024,state,23,Ceará,9233656
+2025,state,23,Ceará,9268836
+2024,state,24,Rio Grande do Norte,3446071
+2025,state,24,Rio Grande do Norte,3455236
+2024,state,25,Paraíba,4145040
+2025,state,25,Paraíba,4164468
+2024,state,26,Pernambuco,9539029
+2025,state,26,Pernambuco,9562007
+2024,state,27,Alagoas,3220104
+2025,state,27,Alagoas,3220848
+2024,state,28,Sergipe,2291077
+2025,state,28,Sergipe,2299425
+2024,state,29,Bahia,14850513
+2025,state,29,Bahia,14870907
+2024,state,31,Minas Gerais,21322691
+2025,state,31,Minas Gerais,21393441
+2024,state,32,Espírito Santo,4102129
+2025,state,32,Espírito Santo,4126854
+2024,state,33,Rio de Janeiro,17219679
+2025,state,33,Rio de Janeiro,17223547
+2024,state,35,São Paulo,45973194
+2025,state,35,São Paulo,46081801
+2024,state,41,Paraná,11824665
+2025,state,41,Paraná,11890517
+2024,state,42,Santa Catarina,8058441
+2025,state,42,Santa Catarina,8187029
+2024,state,43,Rio Grande do Sul,11229915
+2025,state,43,Rio Grande do Sul,11233263
+2024,state,50,Mato Grosso do Sul,2901895
+2025,state,50,Mato Grosso do Sul,2924631
+2024,state,51,Mato Grosso,3836399
+2025,state,51,Mato Grosso,3893659
+2024,state,52,Goiás,7350483
+2025,state,52,Goiás,7423629
+2024,state,53,Distrito Federal,2982818
+2025,state,53,Distrito Federal,2996899

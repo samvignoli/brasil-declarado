@@ -1,9 +1,10 @@
 import Link from "next/link";
 
 const navigation = [
-  ["/desigualdade", "Renda & patrimônio"],
-  ["/raca", "Raça & gênero"],
+  ["/", "Dois anos"],
   ["/territorio", "Território"],
+  ["/desigualdade", "Estruturas sociais"],
+  ["/raca", "Raça & cadastro"],
   ["/trabalho", "Trabalho"],
   ["/metodo", "Como ler"],
 ];
@@ -39,7 +40,7 @@ export function SiteFooter() {
       <div className="footer-meta">
         <p>Fonte: Receita Federal do Brasil</p>
         <p>Extração: 11 jul. 2026</p>
-        <p>Exercícios 2025 e 2026</p>
+        <p>Exercícios 2025 × 2026</p>
       </div>
     </footer>
   );

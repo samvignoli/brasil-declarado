@@ -4,10 +4,10 @@ import { PageShell } from "../components/SiteShell";
 export default function RacaPage() {
   return <PageShell>
     <section className="inner-hero page-pad theme-blue">
-      <div className="hero-index">03 — Raça & gênero</div>
+      <div className="hero-index">04 — Raça, gênero e cadastro</div>
       <p className="eyebrow">O dado e o silêncio</p>
-      <h1>Metade do retrato<br />ainda está em branco.</h1>
-      <p className="inner-deck">Raça/cor só aparece de forma substantiva no exercício 2026 e falta para 49,3% dos declarantes. A leitura precisa começar por essa ausência.</p>
+      <h1>Entre os anos,<br />o dado racial aparece.</h1>
+      <p className="inner-deck">Em 2025, raça/cor está ausente para todos. Em 2026, passa a existir — mas ainda falta para 49,3%. A mudança é cadastral antes de ser estatística.</p>
     </section>
     <section className="page-pad warning-panel">
       <strong>Limite central</strong>

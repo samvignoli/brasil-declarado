@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import csv
 from pathlib import Path
 
 
@@ -14,6 +15,7 @@ SITE = ROOT / "analise-brasil"
 DATA = ROOT / "powerbi_extraido"
 DB_PATH = SITE / "data" / "perfil.duckdb"
 OUT_PATH = SITE / "public" / "data" / "analysis.json"
+POPULATION_PATH = SITE / "data" / "ibge_population_2024_2025.csv"
 
 
 def qpath(path: Path) -> str:
@@ -159,8 +161,23 @@ def main() -> None:
                 "Exercicio e o ano de entrega; os rendimentos se referem ao ano-calendario anterior.",
                 "O universo abrange declarantes do IRPF, nao toda a populacao brasileira.",
             ],
+            "ipca_2025": 0.0426,
+            "population_source": "IBGE/SIDRA, tabela 6579, estimativas em 1 de julho",
+            "population_url": "https://sidra.ibge.gov.br/tabela/6579",
         }
     }
+
+    with POPULATION_PATH.open(encoding="utf-8", newline="") as population_file:
+        output["population"] = [
+            {
+                "year": int(row["year"]),
+                "level": row["level"],
+                "code": row["code"],
+                "name": row["name"],
+                "population": int(row["population"]),
+            }
+            for row in csv.DictReader(population_file)
+        ]
 
     def grouped(
         name: str,

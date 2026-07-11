@@ -8,6 +8,9 @@ const cards = [
   ["04", "Exercício não é ano da renda", "O exercício é o ano de entrega. A declaração do exercício 2026 relata fatos ocorridos, em geral, no ano-calendário 2025."],
   ["05", "Ausência é substantiva", "Categorias vazias ou não informadas são preservadas. Em raça/cor, a ausência impede generalizações para o conjunto da população."],
   ["06", "Associação não é causalidade", "Diferenças entre municípios, gêneros ou ocupações são descritivas. A base não identifica trajetórias nem permite atribuir causalidade."],
+  ["07", "Per capita tem dois sentidos", "Por declarante descreve somente quem está no IRPF. Por habitante divide o total declarado por toda a população e combina riqueza com cobertura fiscal."],
+  ["08", "Os anos não são uma coorte", "A queda de 46,7 para 41,6 milhões de declarantes muda a composição. Não sabemos quem entrou, saiu ou permaneceu entre os exercícios."],
+  ["09", "Comparação real", "Variações monetárias entre os anos-calendário 2024 e 2025 foram corrigidas pelo IPCA de 2025, de 4,26%. Valores exibidos em reais continuam nominais."],
 ];
 
 export default function MetodoPage() {
@@ -16,7 +19,7 @@ export default function MetodoPage() {
       <div className="hero-index">06 — Como ler</div>
       <p className="eyebrow">Método, cobertura e ética</p>
       <h1>O que a declaração<br />consegue enxergar?</h1>
-      <p className="inner-deck">Um guia para não transformar precisão numérica em certeza sociológica.</p>
+      <p className="inner-deck">Um guia para comparar dois exercícios sem transformar precisão numérica em certeza sociológica.</p>
     </section>
     <section className="page-pad source-section"><SourceScale /></section>
     <section className="page-pad method-cards">
@@ -27,7 +30,8 @@ export default function MetodoPage() {
       <div className="story-column prose">
         <p>O arquivo principal foi materializado em uma tabela colunar e agregado por exercício, gênero, raça/cor, faixa etária, município, UF, região, ocupação, natureza do vínculo e faixas de renda e patrimônio.</p>
         <p>Contagens foram somadas com <code>qtd_contribuintes</code> como peso. Renda média, por exemplo, é <code>sum(soma_rend_total) / sum(qtd_contribuintes)</code>. Nenhum resultado usa média simples entre células.</p>
-        <p>Rankings municipais exigem ao menos 50 mil declarantes; ocupações, 20 mil. Isso reduz instabilidade e evita dar destaque a grupos pequenos. Não foi calculado Gini individual, porque a base agregada não preserva posições individuais dentro das faixas.</p>
+        <p>Para medidas populacionais, o exercício 2025 foi relacionado à estimativa do IBGE de 1º de julho de 2024, ano-calendário dos rendimentos; o exercício 2026, à estimativa de 2025. Residentes no exterior foram excluídos dos denominadores regionais.</p>
+        <p>Não foi calculado Gini individual, porque a base agregada não preserva posições individuais dentro das faixas.</p>
       </div>
     </section>
     <section className="page-pad narrative-grid">
@@ -45,6 +49,8 @@ export default function MetodoPage() {
       <a href="https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/perguntas-frequentes/imposto-de-renda/dirpf/declaracao/atualizar" target="_blank" rel="noreferrer">Receita Federal — Atualização do valor dos bens ↗</a>
       <a href="https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/preenchimento/manual-mir/patrimonio/eventos-do-patrimonio" target="_blank" rel="noreferrer">Receita Federal — Eventos do patrimônio ↗</a>
       <a href="https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/perguntas-frequentes/imposto-de-renda/dirpf" target="_blank" rel="noreferrer">Receita Federal — Exercício e ano-calendário ↗</a>
+      <a href="https://sidra.ibge.gov.br/tabela/6579" target="_blank" rel="noreferrer">IBGE/SIDRA — Estimativas da população, tabela 6579 ↗</a>
+      <a href="https://agenciadenoticias.ibge.gov.br/agencia-sala-de-imprensa/2013-agencia-de-noticias/releases/45612-ipca-vai-a-0-33-em-dezembro-e-fecha-o-ano-em-4-26" target="_blank" rel="noreferrer">IBGE — IPCA de 2025 (4,26%) ↗</a>
     </section>
   </PageShell>;
 }

@@ -1,87 +1,69 @@
 import Link from "next/link";
+import { CompositionShift, NationalComparison, RegionalCoverage, RegionalPerCapita } from "./components/ComparativeFigures";
 import { PageShell } from "./components/SiteShell";
-import { SourceScale, WealthFigure } from "./components/DataFigures";
 
 export default function Home() {
-  return (
-    <PageShell>
-      <section className="home-hero page-pad">
-        <div className="hero-index">01 — Retrato nacional</div>
-        <p className="eyebrow">Imposto de renda como lente social</p>
-        <h1>Um país visto<br />por quem declara.</h1>
-        <div className="hero-deck">
-          <p>
-            Renda, patrimônio, idade, gênero, ocupação e território de 46,7 milhões
-            de declarantes — sem confundir declaração com população.
-          </p>
-          <span>Exercício 2025 como referência principal</span>
-        </div>
-        <div className="hero-totals" aria-label="Números gerais do exercício 2025">
-          <div><strong>R$ 6,10 tri</strong><span>renda total declarada</span></div>
-          <div><strong>R$ 15,27 tri</strong><span>patrimônio informado</span></div>
-          <div><strong>46,7 mi</strong><span>declarantes representados</span></div>
-        </div>
-      </section>
+  return <PageShell>
+    <section className="home-hero comparative-hero page-pad">
+      <div className="hero-index">01 — O país entre duas declarações</div>
+      <p className="eyebrow">Exercício 2025 × exercício 2026</p>
+      <h1>Duas fotos.<br />Uma moldura<br />que mudou.</h1>
+      <div className="hero-deck">
+        <p>Renda e patrimônio crescem. O número de declarantes cai. Antes de dizer que o país enriqueceu, é preciso entender quem permaneceu na fotografia.</p>
+        <span>Rendimentos de 2024 e 2025; extração em 11 jul. 2026</span>
+      </div>
+      <div className="hero-totals comparison-totals">
+        <div><strong>−11,0%</strong><span>declarantes observados</span></div>
+        <div><strong>+6,7%</strong><span>renda total, em termos reais</span></div>
+        <div><strong>+6,9%</strong><span>patrimônio total, em termos reais</span></div>
+      </div>
+    </section>
 
-      <section className="page-pad home-intro split-text">
-        <div>
-          <p className="section-number">I</p>
-          <h2>A declaração ilumina o topo e deixa o resto em sombra.</h2>
-        </div>
-        <div className="prose">
-          <p>
-            O IRPF é uma janela extraordinária para observar a distribuição de recursos
-            entre os grupos que declaram. Mas não é um censo: entram pessoas obrigadas
-            por renda, patrimônio ou outras condições, além de entregas voluntárias.
-          </p>
-          <p>
-            Por isso, cada achado neste ensaio descreve o <em>Brasil declarado</em>.
-            Ele mostra concentração, hierarquias e contrastes reais dentro desse universo,
-            sem transformar ausência cadastral em ausência social.
-          </p>
-          <Link href="/metodo" className="text-link">Entenda o universo e as limitações →</Link>
-        </div>
-      </section>
+    <section className="page-pad essay-opening">
+      <p className="section-number">I</p>
+      <div>
+        <h2>O principal achado não é uma cifra. É uma mudança de composição.</h2>
+        <p>O exercício 2025 representa 46,7 milhões de declarantes; o de 2026, 41,6 milhões. Ao mesmo tempo, a população brasileira estimada pelo IBGE cresce de 212,6 para 213,4 milhões. A cobertura do painel recua de 22,0 para 19,5 declarantes a cada cem habitantes.</p>
+        <p>Os valores médios sobem muito mais que os totais porque a parte inferior da distribuição encolhe enquanto as faixas superiores crescem. A base de 2026 está mais concentrada no topo. Comparar médias sem mostrar isso confundiria seleção com enriquecimento.</p>
+      </div>
+    </section>
 
-      <section className="page-pad figure-section">
-        <WealthFigure />
-      </section>
+    <section className="page-pad essay-figure dark-figure-section">
+      <p className="eyebrow">A fotografia nacional, lado a lado</p>
+      <NationalComparison />
+    </section>
 
-      <section className="page-pad findings-grid">
-        <Link href="/desigualdade" className="finding-card tone-green">
-          <span className="card-index">01</span>
-          <p className="eyebrow">Concentração</p>
-          <h3>0,77% recebe quase um quarto da renda.</h3>
-          <p>360 mil declarantes acima de R$ 1,2 milhão anual concentram 23,3% da renda total registrada em 2025.</p>
-          <span className="card-link">Explorar renda e patrimônio →</span>
-        </Link>
-        <Link href="/raca" className="finding-card tone-blue">
-          <span className="card-index">02</span>
-          <p className="eyebrow">Raça & gênero</p>
-          <h3>A ausência também é um dado.</h3>
-          <p>Em 2026, 49,3% dos declarantes não têm raça/cor informada. Entre os identificados, os contrastes são grandes.</p>
-          <span className="card-link">Ler o retrato parcial →</span>
-        </Link>
-        <Link href="/territorio" className="finding-card tone-orange">
-          <span className="card-index">03</span>
-          <p className="eyebrow">Geografia</p>
-          <h3>O Sudeste reúne 60% do patrimônio.</h3>
-          <p>A região representa 51,1% dos declarantes e 60,1% do patrimônio informado no exercício 2025.</p>
-          <span className="card-link">Percorrer o território →</span>
-        </Link>
-        <Link href="/trabalho" className="finding-card tone-gold">
-          <span className="card-index">04</span>
-          <p className="eyebrow">Trabalho & poder</p>
-          <h3>Ocupações desenham hierarquias persistentes.</h3>
-          <p>Magistratura, alta advocacia pública, medicina e direção empresarial aparecem no alto das médias.</p>
-          <span className="card-link">Comparar ocupações →</span>
-        </Link>
-      </section>
+    <section className="page-pad essay-section">
+      <header className="essay-heading"><p className="section-number">II</p><h2>Quem some da base está concentrado embaixo. Quem cresce está no topo.</h2></header>
+      <div className="essay-copy two-column-copy">
+        <p>A faixa de renda anual até R$ 200 mil perde 5,7 milhões de declarantes, queda de 14,0%. Todas as faixas acima dela crescem; o grupo superior a R$ 1,2 milhão aumenta 23,7%.</p>
+        <p>No patrimônio, a faixa até R$ 100 mil perde 17,3% dos declarantes, enquanto o grupo acima de R$ 1 milhão cresce 10,1%. A desigualdade não aparece apenas nos valores: aparece na própria composição do universo observado.</p>
+      </div>
+      <CompositionShift />
+    </section>
 
-      <section className="page-pad source-section">
-        <div className="section-heading"><p className="eyebrow">Escala da fonte</p><h2>Grande o bastante para exigir método.</h2></div>
-        <SourceScale />
-      </section>
-    </PageShell>
-  );
+    <section className="page-pad essay-section paper-section">
+      <header className="essay-heading"><p className="section-number">III</p><h2>A população muda o significado do mapa.</h2></header>
+      <div className="essay-copy two-column-copy">
+        <p>O Sudeste não tem “60% da riqueza” isoladamente: abriga cerca de 41,6% da população e concentra 60% do patrimônio declarado. O Sul reúne 14,7% dos habitantes e cerca de 20% do patrimônio. No Norte e no Nordeste, a relação se inverte.</p>
+        <p>O denominador também mostra a desigualdade de cobertura. Em 2026, há 25 declarantes a cada cem habitantes no Sul e 24,3 no Sudeste, contra 11,8 no Norte e 10,9 no Nordeste. O mapa da riqueza declarada é também um mapa da entrada no sistema fiscal.</p>
+      </div>
+      <RegionalCoverage />
+      <div className="essay-subheading"><p className="eyebrow">Patrimônio declarado por habitante</p><h3>O estoque registrado, dividido por toda a população regional.</h3></div>
+      <RegionalPerCapita />
+      <p className="interpretation-note">Esta medida não é a riqueza média de uma pessoa residente. É o total que aparece nas declarações dividido por todos os habitantes — uma combinação de riqueza, cobertura fiscal e forma de registro dos bens.</p>
+      <Link href="/territorio" className="essay-link">Aprofundar a geografia da declaração →</Link>
+    </section>
+
+    <section className="page-pad conclusions-section">
+      <p className="eyebrow">A foto do país</p>
+      <h2>Quatro conclusões que sobrevivem à cautela.</h2>
+      <div className="conclusions-grid">
+        <article><span>01</span><h3>A base ficou mais seletiva.</h3><p>O recuo de cobertura acontece nas cinco regiões e se concentra nas faixas inferiores.</p></article>
+        <article><span>02</span><h3>A concentração aumentou.</h3><p>Os grupos de renda e patrimônio mais altos ganham peso e participação nos totais.</p></article>
+        <article><span>03</span><h3>O território amplifica.</h3><p>População, entrada no IRPF e patrimônio por declarante se acumulam nos mesmos estados.</p></article>
+        <article><span>04</span><h3>Não é um painel longitudinal.</h3><p>Não sabemos quem entrou ou saiu. A comparação descreve dois universos agregados, não trajetórias pessoais.</p></article>
+      </div>
+    </section>
+  </PageShell>;
 }
