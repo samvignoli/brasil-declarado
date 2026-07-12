@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "Se você usar este projeto, cite-o desta forma."
+title: "Brasil declarado"
+type: software
+authors:
+  - family-names: "Vignoli"
+    given-names: "Sam"
+year: 2026
+url: "https://samvignoli.com/brasildeclarado/"
+repository-code: "https://github.com/samvignoli/brasil-declarado"
+license: MIT
+abstract: >-
+  Análise sociológica, econômica e territorial dos dados agregados de
+  declarantes do Imposto de Renda no Brasil.

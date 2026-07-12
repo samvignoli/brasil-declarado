@@ -1,44 +1,100 @@
 # Brasil declarado
 
-Ensaio visual comparativo sobre renda, patrimônio e desigualdades no universo
-de declarantes do IRPF. Os exercícios 2025 e 2026 são colocados lado a lado e
-relacionados às estimativas populacionais do IBGE para 2024 e 2025.
+Análise sociológica, econômica e territorial dos dados agregados de declarantes
+do Imposto de Renda no Brasil.
 
-## Páginas
+**Site:** https://samvignoli.com/brasildeclarado/  
+**Explorador:** https://samvignoli.com/brasildeclarado/explorador/
 
-- abertura e síntese nacional;
-- comparação entre os dois exercícios;
-- população, cobertura fiscal e patrimônio por habitante;
-- renda, patrimônio e concentração;
-- raça e gênero;
-- território;
-- trabalho e ocupações;
-- método, cobertura e ética.
+O projeto cruza renda, patrimônio, raça, gênero, idade, profissão e território
+sem confundir o universo fiscal com a população brasileira. O relatório compara
+os exercícios 2025 e 2026, confronta médias com totais e explicita os limites da
+declaração de patrimônio pelo custo histórico.
 
-## Dados derivados
+## O que há no projeto
 
-`public/data/analysis.json` contém somente agregados preparados para o site. O
-arquivo pode ser reproduzido com `scripts/build_analysis_data.py`, que usa
-DuckDB e lê `../powerbi_extraido/Fat_-_Perfil_Beneficiario.csv`.
+- ensaio nacional e discrepância entre o painel e as entregas oficiais;
+- Explorador com 223.857 segmentos e 16 combinações dimensionais;
+- URLs compartilháveis que preservam busca e granularidade;
+- atlas de 5.571 municípios, com renda e patrimônio por habitante;
+- desigualdade racial e comparação com o Censo 2022;
+- vínculos entre trabalho privado, setor público e propriedade de capital;
+- checagem crítica de interpretações liberais e esquerdistas;
+- método, fontes, limiares e limitações reproduzíveis.
 
-As médias são sempre calculadas como razão entre somas e contagens ponderadas
-por `qtd_contribuintes`. Nenhum resultado usa média simples entre células.
+## Começar
 
-As populações oficiais estão preservadas em
-`data/ibge_population_2024_2025.csv` e vêm da tabela 6579 do SIDRA. Variações
-monetárias reais usam o IPCA de 2025 (4,26%).
-
-## Desenvolvimento
+Requer Node.js 22 ou superior.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Validação:
+O site estará em http://localhost:3000.
+
+Para construir e executar todos os testes:
 
 ```bash
-npm run build
-npm run lint
-node --test tests/rendered-html.test.mjs
+npm test
 ```
+
+O resultado estático é escrito em `dist/`. Não há dependência de API, CDN,
+fonte ou mapa externo em tempo de execução.
+
+## Dados
+
+O repositório inclui a base compacta do Explorador em
+`public/data/outlier-universe.json.gz`, além dos agregados usados pelo site.
+
+O banco completo em DuckDB tem aproximadamente 1,5 GB e não pertence ao
+histórico Git. Ele será distribuído nos assets da
+[Release mais recente](https://github.com/samvignoli/brasil-declarado/releases/latest),
+acompanhado de README, dicionário e consultas de exemplo.
+
+Para reconstruir os agregados, coloque o banco em `data/perfil.duckdb` e rode:
+
+```bash
+python3 -m pip install duckdb pyshp shapely pytopojson
+npm run data
+```
+
+As médias são calculadas como razão entre somas — renda total dividida pelo
+número de declarantes — e nunca como média simples das células agregadas.
+
+## Fonte principal
+
+[Painel de Perfil dos Declarantes do IRPF — Receita Federal](https://app.powerbi.com/view?r=eyJrIjoiYzA5NTBkYzctZTA1Zi00MDE5LTkzZTItYzM4ZDgwYTFlMmYxIiwidCI6IjZmNDlhYTQzLTgyMmEtNGMyMC05NjcwLWRiNzcwMGJmMWViMCJ9),
+extraído em 11 de julho de 2026. População e malha municipal: IBGE.
+
+## Limitações essenciais
+
+1. Declarantes de IRPF não representam toda a população brasileira.
+2. Combinações pequenas podem ser protegidas ou omitidas. O Explorador exige
+   ao menos 100 declarantes por segmento.
+3. Imóveis, veículos e participações empresariais geralmente permanecem pelo
+   custo histórico ou capital social, não pelo valor de mercado.
+4. A mesma pessoa pode contribuir para agregações diferentes; segmentos de
+   granularidades distintas não devem ser somados.
+5. O recorte de 2026 do painel não coincide com o total oficial de declarações
+   entregues, e a Receita não publicou uma reconciliação desses universos.
+
+## Estrutura
+
+- `src/`: JavaScript e estilos do site;
+- `explorador/`, `territorio/`, `raca/` etc.: capítulos HTML;
+- `scripts/build_deep_report.py`: geração reproduzível dos agregados;
+- `public/data/`: dados estáticos consumidos pelo site;
+- `tests/`: testes de integridade editorial, estatística e técnica;
+- `release/`: documentação dos pacotes de dados.
+
+## Contribuir
+
+Leia [CONTRIBUTING.md](CONTRIBUTING.md). Correções metodológicas, testes,
+melhorias de acessibilidade e novas leituras sociológicas são bem-vindas.
+
+## Licença
+
+O código do projeto é distribuído sob a licença MIT. Os dados mantêm a autoria,
+os termos e as condições aplicáveis às fontes públicas originais; este projeto
+não os relicencia.

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Ensaio crítico sobre renda, patrimônio, raça, território e tributação no Brasil declarado à Receita Federal.">
+  <title>Brasil declarado — uma anatomia da desigualdade</title>
+  <meta name="theme-color" content="#123f31"><link rel="icon" type="image/png" href="./favicon-lion-v2.png"><script type="module" src="/src/site.js"></script>
+</head>
+<body data-page="home" data-root="./">
+  <header class="site-header">
+    <a class="brand" href="./"><b>BR</b><span>Brasil declarado</span></a>
+    <nav aria-label="Capítulos"><a aria-current="page" href="./">Ensaio</a><a href="./explorador/">Explorador</a><a href="./territorio/">Território</a><a href="./raca/">Raça</a><a href="./estrutura/">Classe & imposto</a><a href="./vinculos/">Vínculos</a><a href="./leituras/">Leituras</a><a href="./metodo/">Método</a></nav>
+  </header>
+  <aside class="source-strip"><span>Fonte principal dos cálculos</span><strong>Painel de Perfil dos Declarantes do IRPF · Receita Federal</strong><a href="https://app.powerbi.com/view?r=eyJrIjoiYzA5NTBkYzctZTA1Zi00MDE5LTkzZTItYzM4ZDgwYTFlMmYxIiwidCI6IjZmNDlhYTQzLTgyMmEtNGMyMC05NjcwLWRiNzcwMGJmMWViMCJ9" target="_blank" rel="noreferrer">Abrir o painel original ↗</a></aside>
+  <main>
+    <section class="hero page-pad">
+      <p class="kicker">Retratos fiscais de 2025 e 2026 · edição local</p>
+      <h1>O Brasil que<br>declara <em>não é</em><br>o Brasil inteiro.</h1>
+      <div class="hero-deck"><p>Mas é um espelho poderoso de como renda, propriedade, raça e território organizam privilégios — desde que se saiba quem ficou fora da moldura.</p><span>Dados agregados da Receita Federal<br>População e malha: IBGE</span></div>
+      <div class="hero-rule" aria-hidden="true"></div>
+    </section>
+
+    <section class="home-explorer page-pad"><div><p class="overline">Novo instrumento central</p><h2>Procure quem chega<br>aos extremos.</h2><p>Renda e patrimônio em 223.857 segmentos, reunindo todas as 16 combinações possíveis entre cidade, idade, gênero e raça — sempre com profissão e piso de 100 declarantes.</p></div><a href="./explorador/"><span>Explorador interseccional</span><strong>223.857</strong><small>segmentos pesquisáveis</small><i>Abrir a ferramenta →</i></a></section>
+
+    <section class="lede page-pad">
+      <span class="section-index">01</span>
+      <div><p class="overline">A primeira cautela muda toda a leitura</p><h2>O painel encolhe.<br>As declarações oficiais, não.</h2><p class="big-copy">O painel de perfil registra 41,6 milhões de declarantes no exercício 2026, 11% abaixo de 2025. Entretanto, a Receita informou 44,4 milhões de declarações entregues dentro do prazo em 2026 — recorde histórico e 2,4% acima de 2025. A diferença não pode ser narrada como cinco milhões de brasileiros “dispensados” do imposto.</p><p><strong>Não existe, a priori, uma explicação documentada para os milhões a menos no painel.</strong> Atualização incompleta, data de corte, regras internas de consolidação ou mudança de universo são hipóteses possíveis — não achados. Como o recorte de 2026 encolhe sobretudo nas faixas inferiores, suas médias podem subir por composição. O relatório compara os anos, mas mantém essa incógnita aberta.</p></div>
+    </section>
+
+    <section class="dark-section page-pad">
+      <header class="chapter-head"><span>O universo observado</span><h2>Três contagens.<br>Uma divergência decisiva.</h2></header>
+      <div id="universe-comparison" class="data-ledger" aria-live="polite"></div>
+      <div class="evidence-box"><article><span>O painel diz</span><strong>−5,12 milhões</strong><p>de declarantes entre os recortes de 2025 e 2026.</p></article><article><span>As notícias oficiais dizem</span><strong>+1,05 milhão</strong><p>de entregas dentro do prazo entre 2025 e 2026.</p></article><article><span>Conclusão responsável</span><strong>Não sabemos por quê.</strong><p>Sem nota técnica sobre o corte, atribuir a queda à tabela do IR seria fabricar causalidade.</p></article></div>
+      <p class="figure-note source-note">Fonte dos valores do painel: <a href="https://app.powerbi.com/view?r=eyJrIjoiYzA5NTBkYzctZTA1Zi00MDE5LTkzZTItYzM4ZDgwYTFlMmYxIiwidCI6IjZmNDlhYTQzLTgyMmEtNGMyMC05NjcwLWRiNzcwMGJmMWViMCJ9" target="_blank" rel="noreferrer">Painel de Perfil dos Declarantes do IRPF</a>, extraído em 11 jul. 2026. Entregas no prazo: <a href="https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2025/maio/receita-federal-divulga-balanco-final-do-imposto-de-renda-de-2025/" target="_blank" rel="noreferrer">balanço de 2025</a> e <a href="https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/junho/irpf-2026-registra-recorde-de-entrega-de-declaracoes" target="_blank" rel="noreferrer">balanço de 2026</a>. O exercício é o ano de entrega; renda e patrimônio se referem ao ano-calendário anterior.</p>
+    </section>
+
+    <section class="essay-section page-pad">
+      <header class="chapter-head"><span>02 · Fluxo e estoque</span><h2>Renda passa.<br>Patrimônio permanece.</h2></header>
+      <div class="essay-grid"><div><p class="dropcap">Renda e patrimônio são desigualdades distintas. A renda remunera trabalho, capital e transferências no período. O patrimônio registra poder acumulado: moradia, terra, aplicações, participações empresariais e capacidade de atravessar crises.</p><p>Em 2026, o painel soma R$ 6,78 trilhões de renda e R$ 17,01 trilhões de patrimônio. Mas esse estoque não é valor de mercado: imóveis, veículos e participações empresariais em geral permanecem pelo custo histórico. A cifra subestima valorizações antigas e torna comparações geracionais delicadas.</p></div><blockquote>O patrimônio declarado não mede toda a riqueza. Ainda assim, revela quem dispõe de ativos, liquidez e herança — e quem chega ao sistema fiscal quase sem estoque.</blockquote></div>
+      <div id="national-ledger" class="wide-figure"></div>
+    </section>
+
+    <section class="paper-section page-pad">
+      <header class="chapter-head"><span>03 · Território</span><h2>Não existe riqueza regional<br>sem denominador.</h2></header>
+      <div class="two-col-copy"><p>Dizer que o Sudeste concentra 60% do patrimônio declarado é incompleto. A região abriga 41,6% da população, mas 60,0% do estoque observado. Norte e Nordeste reúnem cerca de 36% dos habitantes e apenas 10,7% desse patrimônio.</p><p>Dividido pela população inteira, e não só pelos declarantes, o patrimônio observado em 2026 equivale a R$ 114,9 mil por habitante no Sudeste, R$ 110,2 mil no Sul, R$ 86,1 mil no Centro-Oeste, R$ 24,2 mil no Nordeste e R$ 23,3 mil no Norte.</p></div>
+      <div id="region-figure" class="region-figure"></div>
+      <a class="text-link" href="./territorio/">Abrir o atlas de 5.571 municípios →</a>
+    </section>
+
+    <section class="orange-section page-pad">
+      <header class="chapter-head"><span>04 · Raça como estrutura</span><h2>A cor da pele organiza<br>o acesso à propriedade.</h2></header>
+      <div class="statement-grid"><p>Entre declarantes com raça conhecida em 2026, a renda média branca é 2,1 vezes a preta. No patrimônio, o abismo chega a <strong>6,6 vezes</strong>.</p><p>Homens brancos declaram patrimônio médio de R$ 753 mil. Mulheres pretas, R$ 74,6 mil: uma relação de <strong>10,1 para 1</strong>.</p><p>Quase metade da base não informa raça. O apagamento cadastral não elimina a desigualdade; limita a capacidade pública de medi-la.</p></div>
+      <a class="text-link dark-link" href="./raca/">Ler o capítulo racial e o contraste com o Censo →</a>
+    </section>
+
+    <section class="essay-section page-pad">
+      <header class="chapter-head"><span>05 · Estado e classe</span><h2>A progressividade se desfaz<br>quando a renda vira capital.</h2></header>
+      <div class="two-col-copy"><p>No painel de 2026, a razão entre imposto devido e renda total cresce até a faixa de R$ 200 mil a R$ 600 mil — 9,5% — e então recua. Acima de R$ 1,2 milhão anuais, fica em 2,7%.</p><p>Não é uma alíquota efetiva oficial: é uma razão descritiva dos campos do painel. Ainda assim, o mecanismo é eloquente. No topo, apenas 11,1% da renda total aparece como tributável; na base, 74,7%. A arquitetura tributária reconhece diferentemente renda do trabalho e renda do capital.</p></div>
+      <div id="tax-figure" class="wide-figure"></div>
+      <a class="text-link" href="./estrutura/">Explorar classe, idade, ocupação e imposto →</a><br><a class="text-link" href="./vinculos/">Comparar setor público, privado e proprietários →</a><br><a class="text-link" href="./leituras/">Checar os argumentos que circulam nas redes →</a>
+    </section>
+
+    <section class="conclusion page-pad"><p class="kicker">Síntese</p><h2>O problema não é que alguns tenham mais.<br>É que raça, origem e território antecipem quem poderá acumular — enquanto o sistema fiscal registra o resultado como se fosse apenas biografia individual.</h2></section>
+  </main>
+  <footer class="site-footer"><p>Brasil declarado · ensaio sociológico e estatístico</p><p><a href="https://app.powerbi.com/view?r=eyJrIjoiYzA5NTBkYzctZTA1Zi00MDE5LTkzZTItYzM4ZDgwYTFlMmYxIiwidCI6IjZmNDlhYTQzLTgyMmEtNGMyMC05NjcwLWRiNzcwMGJmMWViMCJ9" target="_blank" rel="noreferrer">Painel da Receita Federal ↗</a> · extração em 11 jul. 2026</p></footer>
+</body>
+</html>

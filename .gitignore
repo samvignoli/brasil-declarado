@@ -42,4 +42,5 @@ next-env.d.ts
 /work/
 /data/*.duckdb
 /data/*.wal
+/release/*.zip
 *.tsbuildinfo
