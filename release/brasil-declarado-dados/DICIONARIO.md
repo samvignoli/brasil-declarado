@@ -33,13 +33,19 @@ Cada linha é uma célula agregada do cubo, não uma pessoa.
 | `faixa_rend_tributavel` | Faixa de renda tributável. |
 | `faixa_patrimonio` | Faixa de patrimônio. |
 
-## Base compacta do Explorador
+## Índices do Explorador
 
-O JSON comprimido possui três chaves principais:
+O Explorador é dividido em 16 arquivos gzip: oito combinações das três dimensões
+econômicas para cada exercício. Cada JSON comprimido possui:
 
+- `year`: exercício fiscal, 2025 ou 2026;
 - `threshold`: piso de 100 declarantes;
-- `profiles`: as 16 combinações dimensionais;
-- `segments`: os 223.857 segmentos pesquisáveis.
+- `economic_dimensions`: faixas econômicas materializadas naquele índice;
+- `profiles`: oito combinações dimensionais em 2025 e 16 em 2026;
+- `segments`: segmentos pesquisáveis e suas posições dentro do recorte.
+
+O `explorer-manifest.json` relaciona anos, arquivos e opções das faixas. Raça/cor
+não está disponível em 2025 porque todas as células vieram como “Não informado”.
 
 Campos dos segmentos:
 
@@ -54,8 +60,10 @@ Campos dos segmentos:
 | `declarantes` | Quantidade agregada de declarantes. |
 | `income_average` | Renda média do segmento. |
 | `wealth_average` | Patrimônio médio declarado do segmento. |
-| `income_rank` | Posição global em renda média. |
-| `wealth_rank` | Posição global em patrimônio médio. |
-| `income_bottom_rank` | Posição global partindo das menores rendas. |
-| `wealth_bottom_rank` | Posição global partindo dos menores patrimônios não negativos. |
-
+| `income_total_band` | Faixa de rendimentos totais, quando ativa. |
+| `taxable_income_band` | Faixa de rendimentos tributáveis, quando ativa. |
+| `wealth_band` | Faixa de patrimônio, quando ativa. |
+| `income_rank` | Posição em renda média dentro do recorte econômico. |
+| `wealth_rank` | Posição em patrimônio médio dentro do recorte econômico. |
+| `income_bottom_rank` | Posição partindo das menores rendas do recorte. |
+| `wealth_bottom_rank` | Posição partindo dos menores patrimônios não negativos do recorte. |

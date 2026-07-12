@@ -9,7 +9,9 @@ IBGE. O script nunca tenta reconstruir pessoas ou microdados.
 from __future__ import annotations
 
 import csv
+from collections import defaultdict
 import gzip
+import itertools
 import json
 import math
 import re
@@ -29,6 +31,41 @@ MAP_ZIP = Path("/tmp/BR_Municipios_2024.zip")
 MAP_DIR = Path("/tmp/BR_Municipios_2024")
 
 IPCA_2025 = 0.0426
+
+ECONOMIC_BANDS = {
+    "income_total": {
+        "column": "faixa_rend_total", "key": "income_total_band",
+        "param": "renda_total", "label": "Rendimentos totais",
+        "options": [
+            ("ate-200-mil", "0 a R$ 200 mil"),
+            ("200-600-mil", "R$ 200 mil a R$ 600 mil"),
+            ("600-mil-1-2-mi", "R$ 600 mil a R$ 1,2 mi"),
+            ("acima-1-2-mi", "Superior a R$ 1,2 mi"),
+        ],
+    },
+    "taxable_income": {
+        "column": "faixa_rend_tributavel", "key": "taxable_income_band",
+        "param": "renda_tributavel", "label": "Rendimentos tributáveis",
+        "options": [
+            ("ate-28-5-mil", "0 a R$ 28,5 mil"),
+            ("28-5-60-mil", "R$ 28,5 mil a R$ 60 mil"),
+            ("60-88-2-mil", "R$ 60 mil a R$ 88,2 mil"),
+            ("88-2-100-mil", "R$ 88,2 mil a R$ 100 mil"),
+            ("100-500-mil", "R$ 100 mil a R$ 500 mil"),
+            ("acima-500-mil", "Superior a R$ 500 mil"),
+        ],
+    },
+    "wealth": {
+        "column": "faixa_patrimonio", "key": "wealth_band",
+        "param": "patrimonio", "label": "Patrimônio",
+        "options": [
+            ("ate-100-mil", "até R$ 100 mil"),
+            ("100-500-mil", "R$ 100 mil a R$ 500 mil"),
+            ("500-mil-1-mi", "R$ 500 mil a R$ 1 mi"),
+            ("acima-1-mi", "Superior a R$ 1 mi"),
+        ],
+    },
+}
 
 # Mudanças oficiais de grafia ou nome entre a dimensão fiscal e a malha atual.
 # A chave é o código interno da dimensão municipal da Receita.
@@ -319,23 +356,45 @@ def main() -> None:
         row["codigo"]: row["ocupacao"]
         for row in query(con, "SELECT codigo, ocupacao FROM ocupacoes")
     }
-    segment_universe = query(con, """
-      SELECT p.co_municipio AS city_code, p.faixa_etaria AS age,
-             p.genero AS gender, p.raca_cor AS race, p.co_ocupacao AS occupation_code,
-             grouping(p.co_municipio) = 0 AS has_city,
-             grouping(p.faixa_etaria) = 0 AS has_age,
-             grouping(p.genero) = 0 AS has_gender,
-             grouping(p.raca_cor) = 0 AS has_race,
-             sum(p.contribuintes)::BIGINT AS declarantes,
-             sum(p.rend_total)::DOUBLE AS renda,
-             sum(p.patrimonio)::DOUBLE AS patrimonio
-      FROM perfil p JOIN municipios m USING (co_municipio)
-      WHERE p.exercicio = 2026 AND m.uf <> 'EX'
-        AND p.raca_cor <> 'Não Informado'
-      GROUP BY p.co_ocupacao,
-               cube(p.co_municipio, p.faixa_etaria, p.genero, p.raca_cor)
-      HAVING sum(p.contribuintes) >= 100
-    """)
+    def query_segments(year: int, economic_dimensions: tuple[str, ...]) -> list[dict]:
+        economic_select = ", ".join(
+            f"p.{ECONOMIC_BANDS[name]['column']} AS {ECONOMIC_BANDS[name]['key']}"
+            for name in economic_dimensions
+        )
+        economic_group = ", ".join(
+            f"p.{ECONOMIC_BANDS[name]['column']}" for name in economic_dimensions
+        )
+        if economic_select:
+            economic_select += ","
+            economic_group += ","
+        if year == 2025:
+            race_select = "NULL::VARCHAR AS race, false AS has_race,"
+            demographic_cube = "p.co_municipio, p.faixa_etaria, p.genero"
+            race_filter = ""
+        else:
+            race_select = (
+                "p.raca_cor AS race, grouping(p.raca_cor) = 0 AS has_race,"
+            )
+            demographic_cube = (
+                "p.co_municipio, p.faixa_etaria, p.genero, p.raca_cor"
+            )
+            race_filter = "AND p.raca_cor <> 'Não Informado'"
+        return query(con, f"""
+          SELECT {economic_select}
+                 p.co_municipio AS city_code, p.faixa_etaria AS age,
+                 p.genero AS gender, {race_select}
+                 p.co_ocupacao AS occupation_code,
+                 grouping(p.co_municipio) = 0 AS has_city,
+                 grouping(p.faixa_etaria) = 0 AS has_age,
+                 grouping(p.genero) = 0 AS has_gender,
+                 sum(p.contribuintes)::BIGINT AS declarantes,
+                 sum(p.rend_total)::DOUBLE AS renda,
+                 sum(p.patrimonio)::DOUBLE AS patrimonio
+          FROM perfil p JOIN municipios m USING (co_municipio)
+          WHERE p.exercicio = {year} AND m.uf <> 'EX' {race_filter}
+          GROUP BY {economic_group}p.co_ocupacao, cube({demographic_cube})
+          HAVING sum(p.contribuintes) >= 100 AND sum(p.rend_total) > 0
+        """)
 
     def prepare_segment(row: dict) -> dict:
         result = dict(row)
@@ -371,53 +430,39 @@ def main() -> None:
             result.pop("race", None)
         return result
 
-    segment_universe = [
-        prepare_segment(row) for row in segment_universe if row["renda"] > 0
-    ]
-
-    def ranked(rows: list[dict], metric_name: str, reverse: bool, nonnegative=False):
-        eligible = rows
-        if nonnegative:
-            eligible = [row for row in rows if row[metric_name] >= 0]
-        return sorted(eligible, key=lambda row: row[metric_name], reverse=reverse)[:200]
-
     dimension_names = {
         "city": "cidade", "age": "idade", "gender": "gênero", "race": "raça"
     }
-    profile_counts: dict[str, int] = {}
-    for row in segment_universe:
-        profile_counts[row["profile"]] = profile_counts.get(row["profile"], 0) + 1
-    profiles = []
-    for profile, eligible in profile_counts.items():
-        dimensions = [] if profile == "occupation" else profile.split("_")
-        label_parts = [dimension_names[name] for name in dimensions] + ["profissão"]
-        profiles.append({
-            "id": profile,
-            "label": " + ".join(label_parts).capitalize(),
-            "dimensions": dimensions + ["occupation"],
-            "eligible": eligible,
-        })
-    profiles.sort(key=lambda item: (-len(item["dimensions"]), item["label"]))
-    outliers = {
-        "threshold": 100,
-        "universe": {
-            "eligible": len(segment_universe),
-            "profiles": profiles,
-            "income_top": ranked(segment_universe, "income_average", True),
-            "income_bottom": ranked(segment_universe, "income_average", False),
-            "wealth_top": ranked(segment_universe, "wealth_average", True),
-            "wealth_bottom": ranked(segment_universe, "wealth_average", False, True),
-        },
-    }
 
-    def index_segments(rows: list[dict]) -> list[dict]:
-        """Acrescenta posições globais para busca sem duplicar quatro rankings."""
+    def describe_profiles(rows: list[dict]) -> list[dict]:
+        profile_counts: dict[str, int] = {}
+        for row in rows:
+            profile_counts[row["profile"]] = profile_counts.get(row["profile"], 0) + 1
+        profiles = []
+        for profile, eligible in profile_counts.items():
+            dimensions = [] if profile == "occupation" else profile.split("_")
+            label_parts = [dimension_names[name] for name in dimensions] + ["profissão"]
+            profiles.append({
+                "id": profile,
+                "label": " + ".join(label_parts).capitalize(),
+                "dimensions": dimensions + ["occupation"],
+                "eligible": eligible,
+            })
+        profiles.sort(key=lambda item: (-len(item["dimensions"]), item["label"]))
+        return profiles
+
+    def index_segments(rows: list[dict], economic_keys: tuple[str, ...]) -> list[dict]:
+        """Acrescenta posições dentro de cada recorte econômico exato."""
         search_fields = (
             "profile", "municipality", "uf", "age", "gender", "race",
             "occupation", "declarantes", "income_average", "wealth_average",
         )
         indexed = [
-            {field: row[field] for field in search_fields if field in row}
+            {
+                field: row[field]
+                for field in (*search_fields, *economic_keys)
+                if field in row
+            }
             for row in rows
         ]
         rankings = (
@@ -426,20 +471,100 @@ def main() -> None:
             ("wealth_rank", "wealth_average", True, False),
             ("wealth_bottom_rank", "wealth_average", False, True),
         )
-        for rank_name, metric_name, reverse, nonnegative in rankings:
-            eligible = indexed
-            if nonnegative:
-                eligible = [row for row in indexed if row[metric_name] >= 0]
-            ordered = sorted(eligible, key=lambda row: row[metric_name], reverse=reverse)
-            for position, row in enumerate(ordered, 1):
-                row[rank_name] = position
+        scopes: dict[tuple, list[dict]] = defaultdict(list)
+        for row in indexed:
+            scopes[tuple(row.get(key) for key in economic_keys)].append(row)
+        for scope_rows in scopes.values():
+            for rank_name, metric_name, reverse, nonnegative in rankings:
+                eligible = scope_rows
+                if nonnegative:
+                    eligible = [row for row in scope_rows if row[metric_name] >= 0]
+                ordered = sorted(
+                    eligible, key=lambda row: row[metric_name], reverse=reverse
+                )
+                for position, row in enumerate(ordered, 1):
+                    row[rank_name] = position
         return indexed
 
-    outlier_search = {
+    def base_summary(indexed: list[dict], profiles: list[dict]) -> dict:
+        def top(rank_name: str) -> list[dict]:
+            return sorted(
+                (row for row in indexed if row.get(rank_name)),
+                key=lambda row: row[rank_name],
+            )[:200]
+        return {
+            "eligible": len(indexed), "profiles": profiles,
+            "income_top": top("income_rank"),
+            "income_bottom": top("income_bottom_rank"),
+            "wealth_top": top("wealth_rank"),
+            "wealth_bottom": top("wealth_bottom_rank"),
+        }
+
+    explorer_manifest = {
         "threshold": 100,
-        "profiles": profiles,
-        "segments": index_segments(segment_universe),
+        "bands": {
+            name: {
+                key: value for key, value in config.items()
+                if key not in {"column", "options"}
+            } | {
+                "options": [
+                    {"id": option_id, "label": label, "value": label}
+                    for option_id, label in config["options"]
+                ]
+            }
+            for name, config in ECONOMIC_BANDS.items()
+        },
+        "years": {},
     }
+    dataset_sizes = []
+    outliers = None
+    for exercise in (2025, 2026):
+        year_manifest = {"race_available": exercise == 2026, "files": {}}
+        for width in range(4):
+            for economic_dimensions in itertools.combinations(
+                ECONOMIC_BANDS.keys(), width
+            ):
+                economic_keys = tuple(
+                    ECONOMIC_BANDS[name]["key"] for name in economic_dimensions
+                )
+                rows = [
+                    prepare_segment(row)
+                    for row in query_segments(exercise, economic_dimensions)
+                ]
+                profiles = describe_profiles(rows)
+                indexed = index_segments(rows, economic_keys)
+                mask = "+".join(economic_dimensions) or "base"
+                if exercise == 2026 and mask == "base":
+                    filename = "outlier-universe.json.gz"
+                else:
+                    filename = f"outlier-universe-{exercise}-{mask}.json.gz"
+                payload = {
+                    "year": exercise, "threshold": 100,
+                    "economic_dimensions": list(economic_dimensions),
+                    "eligible": len(indexed), "profiles": profiles,
+                    "segments": indexed,
+                }
+                with gzip.open(
+                    OUT / filename, "wt", encoding="utf-8", compresslevel=9
+                ) as handle:
+                    json.dump(
+                        payload, handle, ensure_ascii=False, separators=(",", ":")
+                    )
+                size = (OUT / filename).stat().st_size
+                dataset_sizes.append((filename, len(indexed), size))
+                year_manifest["files"][mask] = filename
+                if mask == "base":
+                    summary = base_summary(indexed, profiles)
+                    year_manifest["base"] = summary
+                    if exercise == 2026:
+                        outliers = {"threshold": 100, "universe": summary}
+                del rows, indexed, payload
+        explorer_manifest["years"][str(exercise)] = year_manifest
+    (OUT / "explorer-manifest.json").write_text(
+        json.dumps(explorer_manifest, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    assert outliers is not None
 
     municipal_race_raw = query(con, """
       SELECT p.co_municipio,
@@ -524,16 +649,21 @@ def main() -> None:
     )
     for legacy_search in OUT.glob("outlier-search*.json"):
         legacy_search.unlink()
-    search_payload = json.dumps(
-        outlier_search, ensure_ascii=False, separators=(",", ":")
-    ).encode("utf-8")
-    with gzip.open(OUT / "outlier-universe.json.gz", "wb", compresslevel=9) as handle:
-        handle.write(search_payload)
+    generated_datasets = {name for name, _, _ in dataset_sizes}
+    for legacy_dataset in OUT.glob("outlier-universe*.json.gz"):
+        if legacy_dataset.name not in generated_datasets:
+            legacy_dataset.unlink()
     con.close()
     build_map(crosswalk)
     print(f"Dados: {(OUT / 'deep-analysis.json').stat().st_size / 1e6:.1f} MB")
-    search_size = (OUT / "outlier-universe.json.gz").stat().st_size
-    print(f"Busca: {len(search_payload) / 1e6:.1f} MB brutos; {search_size / 1e6:.1f} MB gzip")
+    total_search_size = sum(size for _, _, size in dataset_sizes)
+    total_segments = sum(count for _, count, _ in dataset_sizes)
+    print(
+        f"Explorador: {len(dataset_sizes)} índices; "
+        f"{total_segments:,} segmentos; {total_search_size / 1e6:.1f} MB gzip"
+    )
+    for filename, count, size in dataset_sizes:
+        print(f"  {filename}: {count:,} segmentos; {size / 1e6:.1f} MB")
     print(f"Mapa: {(OUT / 'municipalities.topo.json').stat().st_size / 1e6:.1f} MB")
     print(f"Cidades: {len(cities)} linhas; recorte racial: {len(municipal_race)} cidades")
 

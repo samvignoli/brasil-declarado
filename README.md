@@ -14,8 +14,9 @@ declaração de patrimônio pelo custo histórico.
 ## O que há no projeto
 
 - ensaio nacional e discrepância entre o painel e as entregas oficiais;
-- Explorador com 223.857 segmentos e 16 combinações dimensionais;
-- URLs compartilháveis que preservam busca e granularidade;
+- Explorador comparativo: 214.184 segmentos em 2025 e 223.857 em 2026;
+- filtros combináveis de renda total, renda tributável e patrimônio;
+- URLs compartilháveis que preservam exercício, busca, granularidade e faixas;
 - atlas de 5.571 municípios, com renda e patrimônio por habitante;
 - desigualdade racial e comparação com o Censo 2022;
 - vínculos entre trabalho privado, setor público e propriedade de capital;
@@ -44,8 +45,10 @@ fonte ou mapa externo em tempo de execução.
 
 ## Dados
 
-O repositório inclui a base compacta do Explorador em
-`public/data/outlier-universe.json.gz`, além dos agregados usados pelo site.
+O repositório inclui 16 índices comprimidos do Explorador em `public/data/`:
+oito combinações de filtros econômicos para cada exercício. O navegador carrega
+somente o índice correspondente ao recorte ativo, com 10 a 13 MB em gzip. O
+arquivo `explorer-manifest.json` descreve exercícios, faixas e partições.
 
 O banco completo em DuckDB tem aproximadamente 1,5 GB e não pertence ao
 histórico Git. Ele será distribuído nos assets da
@@ -78,6 +81,10 @@ extraído em 11 de julho de 2026. População e malha municipal: IBGE.
    granularidades distintas não devem ser somados.
 5. O recorte de 2026 do painel não coincide com o total oficial de declarações
    entregues, e a Receita não publicou uma reconciliação desses universos.
+6. Raça/cor veio integralmente como “Não informado” no exercício 2025. Por isso,
+   os perfis raciais do Explorador existem apenas em 2026.
+7. Rankings condicionados por uma faixa valem somente dentro dela. Filtrar pela
+   própria variável ranqueada é uma descrição circular, não um ranking geral.
 
 ## Estrutura
 

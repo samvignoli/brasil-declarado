@@ -13,8 +13,10 @@ Extração utilizada pelo projeto: 11 de julho de 2026.
 
 - `perfil-irpf-2025-2026.duckdb`: banco analítico completo extraído do cubo
   agregado da Receita. Aproximadamente 1,5 GB.
-- `explorador-223857-segmentos.json.gz`: universo compacto usado na busca do
-  Explorador. Contém 223.857 agregações e 16 perfis dimensionais.
+- `explorer-manifest.json`: catálogo de exercícios, faixas e partições.
+- `outlier-universe*.json.gz`: 16 índices do Explorador — oito combinações de
+  faixas econômicas para cada exercício. Cada navegação carrega apenas a
+  partição correspondente ao recorte ativo.
 - `DICIONARIO.md`: descrição dos principais campos e limitações.
 - `CONSULTAS_EXEMPLO.sql`: exemplos de consultas em DuckDB.
 
@@ -51,10 +53,13 @@ DuckDB.
 7. O recorte do painel para 2026 não coincide com a quantidade oficial de
    declarações entregues. A Receita não publicou, até a elaboração do projeto,
    uma reconciliação dos dois universos.
+8. Raça/cor não está disponível no exercício 2025: todas as células extraídas
+   vieram como “Não informado”. Os perfis raciais existem apenas em 2026.
+9. Posições condicionadas por faixas econômicas valem somente dentro delas.
+   Filtrar pela própria variável ranqueada altera a pergunta e deve ser descrito.
 
 ## Uso responsável
 
 Ao reutilizar os dados, cite a Receita Federal como fonte primária, informe o
 universo analisado e preserve as ressalvas metodológicas. Este pacote não altera
 nem substitui os termos aplicáveis à fonte pública original.
-

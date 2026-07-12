@@ -68,12 +68,13 @@ test("oferece rankings extensos com rolagem interna acessível", () => {
   const runtime = fs.readdirSync(path.join(dist, "assets"))
     .filter(name => name.endsWith(".js"))
     .map(name => read(path.join("assets", name))).join("\n");
-  assert.match(html, /posição global/);
+  assert.match(html, /posição no recorte ativo/);
   assert.match(html, /Pesquisar segmentos/);
   assert.match(runtime, /outlier-scroll/);
   assert.match(runtime, /tabindex="0"/);
   assert.match(runtime, /role="region"/);
-  assert.match(runtime, /outlier-universe\.json\.gz/);
+  assert.match(runtime, /explorer-manifest\.json/);
+  assert.match(fs.readFileSync(path.join(root, "src/site.js"), "utf8"), /manifest\.years\[year\]\.files\[mask\]/);
   assert.match(runtime, /DecompressionStream/);
 });
 
@@ -81,8 +82,8 @@ test("dá centralidade ao explorador sem transformar a home em painel", () => {
   const home = read("index.html");
   const readings = read("leituras/index.html");
   const explorer = read("explorador/index.html");
-  assert.match(home, /Novo instrumento central/);
-  assert.match(home, /223\.857/);
+  assert.match(home, /Instrumento central/);
+  assert.match(home, /Compare 2025 e 2026/);
   assert.match(home, /href="\.\/explorador\//);
   assert.doesNotMatch(home, /id="segment-outliers"/);
   assert.doesNotMatch(readings, /id="segment-outliers"/);
@@ -103,7 +104,64 @@ test("serializa busca e perfil na URL para compartilhamento", () => {
   assert.match(runtime, /history\.replaceState/);
   assert.match(source, /searchParams\.set\("q"/);
   assert.match(source, /searchParams\.set\("perfil"/);
+  assert.match(source, /searchParams\.set\("ano"/);
+  assert.match(source, /config\.param/);
   assert.match(runtime, /navigator\.clipboard/);
+});
+
+test("oferece 2025 e 2026 com todas as combinações de faixas econômicas", () => {
+  const manifest = JSON.parse(read("data/explorer-manifest.json"));
+  assert.equal(manifest.threshold, 100);
+  assert.deepEqual(Object.keys(manifest.bands), ["income_total", "taxable_income", "wealth"]);
+  assert.equal(Object.keys(manifest.years["2025"].files).length, 8);
+  assert.equal(Object.keys(manifest.years["2026"].files).length, 8);
+  assert.equal(manifest.years["2025"].base.eligible, 214184);
+  assert.equal(manifest.years["2026"].base.eligible, 223857);
+  assert.equal(manifest.years["2025"].base.profiles.length, 8);
+  assert.equal(manifest.years["2026"].base.profiles.length, 16);
+  assert.equal(manifest.years["2025"].race_available, false);
+  assert.equal(manifest.years["2026"].race_available, true);
+  for (const year of Object.values(manifest.years)) {
+    for (const filename of Object.values(year.files)) {
+      assert.ok(fs.existsSync(path.join(dist, "data", filename)), filename);
+    }
+  }
+  const html = read("explorador/index.html");
+  assert.match(html, /data-explorer-year="2025"/);
+  assert.match(html, /data-explorer-year="2026"/);
+  assert.match(html, /data-economic-filter="income_total"/);
+  assert.match(html, /data-economic-filter="taxable_income"/);
+  assert.match(html, /data-economic-filter="wealth"/);
+  assert.match(html, /conditional-ranking-note/);
+  assert.match(html, /posição vale apenas dentro daquele recorte/);
+});
+
+test("reproduz o recorte condicional observado no painel da Receita", () => {
+  const compressed = fs.readFileSync(path.join(dist, "data/outlier-universe-2026-income_total.json.gz"));
+  const index = JSON.parse(gunzipSync(compressed).toString("utf8"));
+  assert.deepEqual(index.economic_dimensions, ["income_total"]);
+  const row = index.segments.find(item =>
+    item.income_total_band === "Superior a R$ 1,2 mi" &&
+    item.profile === "age_gender_race" &&
+    item.occupation === "Titular de Cartório" &&
+    item.gender === "Masculino" && item.race === "Branca" &&
+    item.age === "80 anos ou mais"
+  );
+  assert.equal(row.declarantes, 118);
+  assert.equal(row.income_average, 9710079.04);
+  assert.equal(row.wealth_average, 14341754.57);
+  assert.equal(row.income_rank, 34);
+});
+
+test("não inventa raça em 2025", () => {
+  const compressed = fs.readFileSync(path.join(dist, "data/outlier-universe-2025-base.json.gz"));
+  const index = JSON.parse(gunzipSync(compressed).toString("utf8"));
+  assert.equal(index.year, 2025);
+  assert.equal(index.profiles.length, 8);
+  assert.ok(index.profiles.every(profile => !profile.dimensions.includes("race")));
+  assert.ok(index.segments.every(row => !("race" in row)));
+  assert.equal(index.segments.reduce((minimum, row) => Math.min(minimum, row.income_rank), Infinity), 1);
+  assert.equal(index.segments.reduce((maximum, row) => Math.max(maximum, row.income_rank), 0), index.segments.length);
 });
 
 test("indexa o universo completo em gzip com posições globais", () => {
@@ -158,6 +216,8 @@ test("explicita a discrepância sem inventar uma causa", () => {
   assert.match(method, /Não encontramos nota técnica que reconcilie os universos/);
   assert.match(method, /43\.344\.108/);
   assert.match(method, /44\.393\.571/);
+  assert.match(method, /Um gráfico também pode ser um filtro/);
+  assert.match(method, /restam 118/);
 });
 
 test("usa o favicon de leão editorial em todos os capítulos", () => {

@@ -31,6 +31,12 @@ async function loadData() {
   return response.json();
 }
 
+async function loadExplorerManifest() {
+  const response = await fetch(`${root}data/explorer-manifest.json`);
+  if (!response.ok) throw new Error("Falha ao carregar o índice do Explorador");
+  return response.json();
+}
+
 function table(headers, rows) {
   return `<table class="metric-table"><thead><tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
@@ -205,7 +211,7 @@ function shortOccupation(label){
   return exact[label]||label;
 }
 
-function renderExplorer(data){
+function renderExplorer(manifest){
   const segmentLabel=row=>{
     const female=row.gender==="Feminino";
     const feminine=female||!row.gender;
@@ -220,9 +226,14 @@ function renderExplorer(data){
   const searchInput=document.querySelector("#outlier-search");
   const searchStatus=document.querySelector("#outlier-search-status");
   const profileSelect=document.querySelector("#outlier-profile");
-  const universeData=data.outliers.universe;
-  const profileLabels=Object.fromEntries(universeData.profiles.map(profile=>[profile.id,profile.label]));
-  profileSelect.insertAdjacentHTML("beforeend",universeData.profiles.map(profile=>`<option value="${profile.id}">${profile.label} · ${integer.format(profile.eligible)}</option>`).join(""));
+  const edition=document.querySelector("#explorer-edition");
+  const segmentCount=document.querySelector("#explorer-segment-count");
+  const profileCount=document.querySelector("#explorer-profile-count");
+  const yearNote=document.querySelector("#explorer-year-note");
+  const conditionalNote=document.querySelector("#conditional-ranking-note");
+  const yearButtons=[...document.querySelectorAll("[data-explorer-year]")];
+  const economicSelects=Object.fromEntries([...document.querySelectorAll("[data-economic-filter]")].map(select=>[select.dataset.economicFilter,select]));
+  Object.entries(manifest.bands).forEach(([name,config])=>economicSelects[name].insertAdjacentHTML("beforeend",config.options.map(option=>`<option value="${option.id}">${option.label}</option>`).join("")));
   const groups=[
     ["Maior renda média","income_top","income_average","income_rank"],
     ["Maior patrimônio médio","wealth_top","wealth_average","wealth_rank"],
@@ -230,10 +241,27 @@ function renderExplorer(data){
     ["Menor patrimônio médio","wealth_bottom","wealth_average","wealth_bottom_rank"],
   ];
   const normalizeSearch=value=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-  let searchUniverse=null;
-  let universePromise=null;
-  const ensureUniverse=()=>{
-    if(!universePromise) universePromise=fetch(`${root}data/outlier-universe.json.gz`).then(async response=>{
+  const initialParams=new URLSearchParams(window.location.search);
+  let year=["2025","2026"].includes(initialParams.get("ano"))?initialParams.get("ano"):"2026";
+  let selectedProfile=initialParams.get("perfil")||"all";
+  searchInput.value=initialParams.get("q")||"";
+  Object.entries(manifest.bands).forEach(([name,config])=>{
+    const requested=initialParams.get(config.param);
+    economicSelects[name].value=config.options.some(option=>option.id===requested)?requested:"all";
+  });
+  const datasetCache=new Map();
+  let requestVersion=0;
+  const activeEconomic=()=>Object.keys(manifest.bands).filter(name=>economicSelects[name].value!=="all");
+  const activeBandSelections=()=>Object.fromEntries(activeEconomic().map(name=>{
+    const config=manifest.bands[name],id=economicSelects[name].value;
+    return [name,config.options.find(option=>option.id===id)];
+  }));
+  const maskKey=()=>activeEconomic().join("+")||"base";
+  const loadDataset=()=>{
+    const mask=maskKey(),cacheKey=`${year}:${mask}`;
+    if(!datasetCache.has(cacheKey)){
+      const filename=manifest.years[year].files[mask];
+      const promise=fetch(`${root}data/${filename}`).then(async response=>{
       if(!response.ok) throw new Error("Falha ao carregar o universo de busca");
       const bytes=new Uint8Array(await response.arrayBuffer());
       let jsonText;
@@ -242,36 +270,99 @@ function renderExplorer(data){
         const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
         jsonText=await new Response(stream).text();
       }else jsonText=new TextDecoder().decode(bytes);
-      const payload=JSON.parse(jsonText);
-      searchUniverse=payload.segments;
-      return searchUniverse;
-    });
-    return universePromise;
+        return JSON.parse(jsonText);
+      }).catch(error=>{datasetCache.delete(cacheKey);throw error;});
+      datasetCache.set(cacheKey,promise);
+    }
+    return datasetCache.get(cacheKey);
   };
-  const drawOutliers=(query="",profile="all")=>{
+  const scopedProfiles=(profiles,rows=null)=>{
+    const counts=rows?rows.reduce((acc,row)=>(acc[row.profile]=(acc[row.profile]||0)+1,acc),{}):null;
+    return profiles.map(profile=>({...profile,eligible:counts?counts[profile.id]||0:profile.eligible})).filter(profile=>profile.eligible>0);
+  };
+  const populateProfiles=(profiles,rows=null)=>{
+    const available=scopedProfiles(profiles,rows);
+    if(selectedProfile!=="all"&&!available.some(profile=>profile.id===selectedProfile))selectedProfile="all";
+    profileSelect.innerHTML=`<option value="all">Todas as ${available.length} combinações</option>`+available.map(profile=>`<option value="${profile.id}">${profile.label} · ${integer.format(profile.eligible)}</option>`).join("");
+    profileSelect.value=selectedProfile;
+    return available;
+  };
+  const updateEdition=(eligible,profiles)=>{
+    edition.textContent=`Explorador · exercício ${year}`;
+    segmentCount.textContent=integer.format(eligible);
+    profileCount.textContent=integer.format(profiles.length);
+    yearButtons.forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.explorerYear===year)));
+    yearNote.textContent=manifest.years[year].race_available?"Em 2026, raça/cor permite 16 combinações demográficas.":"Em 2025, raça/cor veio integralmente como não informada; por isso há 8 combinações.";
+  };
+  const syncExplorerUrl=()=>{
+    const url=new URL(window.location.href),query=searchInput.value.trim();
+    if(query)url.searchParams.set("q",query);else url.searchParams.delete("q");
+    if(selectedProfile!=="all")url.searchParams.set("perfil",selectedProfile);else url.searchParams.delete("perfil");
+    if(year!=="2026")url.searchParams.set("ano",year);else url.searchParams.delete("ano");
+    Object.entries(manifest.bands).forEach(([name,config])=>{const value=economicSelects[name].value;if(value!=="all")url.searchParams.set(config.param,value);else url.searchParams.delete(config.param);});
+    window.history.replaceState({},"",`${url.pathname}${url.search}${url.hash}`);
+    document.title=query?`${query} | Explorador ${year} | Brasil declarado`:`Explorador ${year} | Brasil declarado`;
+  };
+  const drawOutliers=({base=null,scopeRows=null,profiles,query=""})=>{
+    const profileLabels=Object.fromEntries(profiles.map(profile=>[profile.id,profile.label]));
     const tokens=normalizeSearch(query).split(/\s+/).filter(Boolean);
-    const filtered=searchUniverse&&(tokens.length||profile!=="all")?searchUniverse.filter(row=>{if(profile!=="all"&&row.profile!==profile)return false;const haystack=normalizeSearch(`${segmentLabel(row)} ${profileLabels[row.profile]||""}`);return tokens.every(token=>haystack.includes(token));}):null;
-    const visibleCount=filtered?filtered.length:universeData.eligible;
-    if(filtered) searchStatus.textContent=`${integer.format(visibleCount)} segmentos encontrados. A numeração preserva a posição global entre ${integer.format(universeData.eligible)} agregações.`;
-    else searchStatus.textContent=`O ranking reúne ${integer.format(universeData.eligible)} segmentos em 16 combinações e exibe os 200 extremos de cada métrica.`;
-    const incomeRows=filtered?[...filtered].sort((a,b)=>a.income_rank-b.income_rank):universeData.income_top;
+    const filtered=scopeRows?scopeRows.filter(row=>{if(selectedProfile!=="all"&&row.profile!==selectedProfile)return false;const haystack=normalizeSearch(`${segmentLabel(row)} ${profileLabels[row.profile]||""}`);return tokens.every(token=>haystack.includes(token));}):null;
+    const visibleCount=filtered?filtered.length:base.eligible;
+    const scope=selectedProfile==="all"?`Todas as ${profiles.length} combinações`:profileLabels[selectedProfile];
+    if(filtered)searchStatus.textContent=`${integer.format(visibleCount)} segmentos encontrados. A numeração preserva a posição dentro do recorte econômico ativo.`;
+    else searchStatus.textContent=`O ranking reúne ${integer.format(base.eligible)} segmentos e exibe os 200 extremos de cada métrica.`;
+    const incomeRows=filtered?[...filtered].sort((a,b)=>a.income_rank-b.income_rank):base.income_top;
     const leader=incomeRows[0];
-    const scope=profile==="all"?"Todas as 16 combinações":profileLabels[profile];
-    outlierHost.innerHTML=`<div class="outlier-summary"><span>${scope} · ${integer.format(visibleCount)} grupos</span>${leader?`<strong>${segmentLabel(leader)}</strong><p>lidera a renda média observada: ${money(leader.income_average)} por ano.</p>`:`<strong>Nenhum segmento encontrado</strong><p>Remova filtros ou tente outra busca.</p>`}</div><div class="outlier-grid">${groups.map(([title,key,metric,rankField])=>{const rows=filtered?[...filtered].filter(row=>row[rankField]).sort((a,b)=>a[rankField]-b[rankField]).slice(0,200):universeData[key];return `<section class="outlier-panel"><h3>${title}<small>${integer.format(rows.length)} ${filtered?"resultados":"segmentos"}</small></h3><div class="outlier-scroll" role="region" tabindex="0" aria-label="Ranking: ${title}">${rows.length?rows.map((row,index)=>{const position=filtered?row[rankField]:index+1;return `<div class="outlier-row"><i>#${integer.format(position)}</i><span>${segmentLabel(row)}<small>${integer.format(row.declarantes)} declarantes · ${profileLabels[row.profile]||row.profile}</small></span><b>${money(row[metric])}</b></div>`;}).join(""):`<p class="outlier-empty">Nenhum segmento corresponde a esta busca.</p>`}</div></section>`;}).join("")}</div>`;
+    const selections=activeBandSelections();
+    const conditionedIncome=Boolean(selections.income_total);
+    const conditionedWealth=Boolean(selections.wealth);
+    outlierHost.innerHTML=`<div class="outlier-summary"><span>Exercício ${year} · ${scope} · ${integer.format(visibleCount)} grupos</span>${leader?`<strong>${segmentLabel(leader)}</strong><p>lidera a renda média observada: ${money(leader.income_average)} por ano.</p>`:`<strong>Nenhum segmento encontrado</strong><p>Remova filtros ou tente outra busca.</p>`}</div><div class="outlier-grid">${groups.map(([title,key,metric,rankField])=>{const allRows=filtered?[...filtered].filter(row=>row[rankField]).sort((a,b)=>a[rankField]-b[rankField]):base[key];const rows=allRows.slice(0,200);const circular=(metric==="income_average"&&conditionedIncome)||(metric==="wealth_average"&&conditionedWealth);const countLabel=filtered?(allRows.length>200?`200 de ${integer.format(allRows.length)}`:`${integer.format(allRows.length)} resultados`):"200 extremos";return `<section class="outlier-panel${circular?" is-conditioned":""}"><h3>${title}${circular?" dentro da faixa":""}<small>${countLabel}</small></h3>${circular?`<p class="circular-warning">Condicionado pela própria variável</p>`:""}<div class="outlier-scroll" role="region" tabindex="0" aria-label="Ranking: ${title}">${rows.length?rows.map(row=>`<div class="outlier-row"><i>#${integer.format(row[rankField])}</i><span>${segmentLabel(row)}<small>${integer.format(row.declarantes)} declarantes · ${profileLabels[row.profile]||row.profile}</small></span><b>${money(row[metric])}</b></div>`).join(""):`<p class="outlier-empty">Nenhum segmento corresponde a esta busca.</p>`}</div></section>`;}).join("")}</div>`;
   };
-  const syncExplorerUrl=()=>{const query=searchInput.value.trim(),profile=profileSelect.value;const url=new URL(window.location.href);if(query)url.searchParams.set("q",query);else url.searchParams.delete("q");if(profile!=="all")url.searchParams.set("perfil",profile);else url.searchParams.delete("perfil");window.history.replaceState({},"",`${url.pathname}${url.search}${url.hash}`);document.title=query?`${query} | Explorador | Brasil declarado`:"Explorador | Brasil declarado";};
-  const runUniverseFilter=async({syncUrl=true}={})=>{const query=searchInput.value.trim(),profile=profileSelect.value;if(syncUrl)syncExplorerUrl();if(!query&&profile==="all"){drawOutliers();return;}searchStatus.textContent="Carregando as 16 combinações…";try{await ensureUniverse();drawOutliers(query,profile);}catch{searchStatus.textContent="Não foi possível carregar o universo completo neste navegador.";}};
-  profileSelect.addEventListener("change",()=>runUniverseFilter());
+  const updateConditionalNote=(scopeCount=null)=>{
+    const selections=activeBandSelections(),entries=Object.entries(selections);
+    conditionalNote.hidden=!entries.length;
+    if(!entries.length){conditionalNote.innerHTML="";return;}
+    const labels=entries.map(([name,option])=>`${manifest.bands[name].label}: <b>${option.label}</b>`).join(" · ");
+    const warnings=[];
+    if(selections.income_total)warnings.push("os rankings de renda estão condicionados pela própria renda");
+    if(selections.wealth)warnings.push("os rankings de patrimônio estão condicionados pelo próprio patrimônio");
+    conditionalNote.innerHTML=`<strong>Ranking condicionado${scopeCount===null?"":` · ${integer.format(scopeCount)} segmentos`}.</strong><span>${labels}.</span>${warnings.length?`<em>Atenção: ${warnings.join("; ")}.</em>`:""}`;
+  };
+  const showLoadError=()=>{
+    searchStatus.textContent="Não foi possível carregar o índice deste recorte.";
+    outlierHost.innerHTML=`<div class="explorer-error"><strong>O recorte não pôde ser carregado.</strong><p>Verifique a conexão ou tente novamente.</p><button type="button" id="retry-explorer">Tentar novamente</button></div>`;
+    document.querySelector("#retry-explorer").addEventListener("click",()=>runExplorer({syncUrl:false}));
+  };
+  const runExplorer=async({syncUrl=true}={})=>{
+    const version=++requestVersion,query=searchInput.value.trim(),economic=activeEconomic();
+    if(syncUrl)syncExplorerUrl();
+    const base=manifest.years[year].base;
+    if(!query&&selectedProfile==="all"&&!economic.length){const profiles=populateProfiles(base.profiles);updateEdition(base.eligible,profiles);updateConditionalNote();drawOutliers({base,profiles});return;}
+    searchStatus.textContent=`Carregando o índice de ${year}…`;
+    updateConditionalNote();
+    try{
+      const dataset=await loadDataset();
+      if(version!==requestVersion)return;
+      const selections=activeBandSelections();
+      const scopeRows=dataset.segments.filter(row=>Object.entries(selections).every(([name,option])=>row[manifest.bands[name].key]===option.value));
+      const profiles=populateProfiles(dataset.profiles,scopeRows);
+      updateEdition(scopeRows.length,profiles);
+      updateConditionalNote(scopeRows.length);
+      drawOutliers({scopeRows,profiles,query});
+      if(syncUrl)syncExplorerUrl();
+    }catch{if(version===requestVersion)showLoadError();}
+  };
   let searchTimer;
-  searchInput.addEventListener("input",()=>{syncExplorerUrl();clearTimeout(searchTimer);searchTimer=setTimeout(()=>runUniverseFilter({syncUrl:false}),180);});
-  document.querySelectorAll("[data-outlier-query]").forEach(button=>button.addEventListener("click",()=>{searchInput.value=button.dataset.outlierQuery;runUniverseFilter();}));
+  searchInput.addEventListener("input",()=>{syncExplorerUrl();clearTimeout(searchTimer);searchTimer=setTimeout(()=>runExplorer({syncUrl:false}),180);});
+  profileSelect.addEventListener("change",()=>{selectedProfile=profileSelect.value;runExplorer();});
+  yearButtons.forEach(button=>button.addEventListener("click",()=>{year=button.dataset.explorerYear;runExplorer();}));
+  Object.values(economicSelects).forEach(select=>select.addEventListener("change",()=>runExplorer()));
+  document.querySelector("#clear-economic-filters").addEventListener("click",()=>{Object.values(economicSelects).forEach(select=>{select.value="all";});runExplorer();});
+  document.querySelectorAll("[data-outlier-query]").forEach(button=>button.addEventListener("click",()=>{searchInput.value=button.dataset.outlierQuery;runExplorer();}));
   const copyButton=document.querySelector("#copy-explorer-link");
   copyButton.addEventListener("click",async()=>{syncExplorerUrl();try{await navigator.clipboard.writeText(window.location.href);copyButton.textContent="Link copiado";}catch{copyButton.textContent="Copie a URL do navegador";}setTimeout(()=>{copyButton.textContent="Copiar link";},2200);});
-  const initialParams=new URLSearchParams(window.location.search);
-  const initialProfile=initialParams.get("perfil");
-  if(initialProfile&&universeData.profiles.some(profile=>profile.id===initialProfile))profileSelect.value=initialProfile;
-  searchInput.value=initialParams.get("q")||"";
-  if(searchInput.value||profileSelect.value!=="all")runUniverseFilter({syncUrl:false});else drawOutliers();
+  populateProfiles(manifest.years[year].base.profiles);
+  runExplorer({syncUrl:false});
 }
 
 function renderReadings(data){
@@ -301,4 +392,15 @@ function renderReadings(data){
   renderTaxFigure(data,"#readings-tax-figure");
 }
 
-loadData().then(data=>{if(page==="home")renderHome(data);if(page==="explorador")renderExplorer(data);if(page==="territorio")renderTerritory(data);if(page==="raca")renderRace(data);if(page==="estrutura")renderStructure(data);if(page==="vinculos")renderLinkages(data);if(page==="leituras")renderReadings(data);}).catch(error=>{console.error(error);document.querySelectorAll(".loading").forEach(el=>{el.classList.add("error");el.textContent="Não foi possível carregar os dados locais.";});});
+const initialize=async()=>{
+  if(page==="metodo")return;
+  if(page==="explorador"){renderExplorer(await loadExplorerManifest());return;}
+  const data=await loadData();
+  if(page==="home")renderHome(data);
+  if(page==="territorio")renderTerritory(data);
+  if(page==="raca")renderRace(data);
+  if(page==="estrutura")renderStructure(data);
+  if(page==="vinculos")renderLinkages(data);
+  if(page==="leituras")renderReadings(data);
+};
+initialize().catch(error=>{console.error(error);document.querySelectorAll(".loading").forEach(el=>{el.classList.add("error");el.textContent="Não foi possível carregar os dados locais.";});const explorer=document.querySelector("#segment-outliers");if(explorer)explorer.innerHTML='<div class="explorer-error"><strong>O Explorador não pôde ser iniciado.</strong><p>Tente recarregar a página.</p></div>';});
