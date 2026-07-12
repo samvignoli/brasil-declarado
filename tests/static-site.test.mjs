@@ -170,6 +170,21 @@ test("usa o favicon de leão editorial em todos os capítulos", () => {
   }
 });
 
+test("publica uma capa social absoluta em todos os capítulos", () => {
+  const pages = ["index.html", "explorador/index.html", "territorio/index.html", "raca/index.html", "estrutura/index.html", "vinculos/index.html", "leituras/index.html", "metodo/index.html"];
+  const image = path.join(dist, "og-brasil-declarado.png");
+  assert.ok(fs.existsSync(image));
+  assert.ok(fs.statSync(image).size > 100_000);
+  for (const file of pages) {
+    const html = read(file);
+    assert.match(html, /rel="canonical" href="https:\/\/samvignoli\.com\/brasildeclarado\//, `${file}: canonical absoluto`);
+    assert.match(html, /property="og:image" content="https:\/\/samvignoli\.com\/brasildeclarado\/og-brasil-declarado\.png"/, `${file}: imagem Open Graph`);
+    assert.match(html, /property="og:image:width" content="1200"/);
+    assert.match(html, /property="og:image:height" content="630"/);
+    assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  }
+});
+
 test("não contém vestígios de hospedagem Sites nem dependências externas em runtime", () => {
   assert.equal(fs.existsSync(path.join(root, ".openai", "hosting.json")), false);
   const runtime = fs.readdirSync(path.join(dist, "assets"))
